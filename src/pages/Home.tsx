@@ -180,6 +180,7 @@ const Home = () => {
                   transition={{ delay: 0.1 + i * 0.05 }}
                 >
                   <VideoCard
+                    id={vid.id}
                     title={vid.title}
                     thumbnail={vid.thumbnail_url}
                     duration={formatDuration(vid.duration_seconds)}

@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { Play, Clock, Star } from 'lucide-react';
 import PremiumBadge from './ui/PremiumBadge';
 import { motion } from 'framer-motion';
 
 interface VideoCardProps {
+  id?: string;
   title: string;
   thumbnail?: string;
   duration?: string;
@@ -12,10 +14,21 @@ interface VideoCardProps {
   onClick?: () => void;
 }
 
-const VideoCard = ({ title, thumbnail, duration, category, isPremium, progress, onClick }: VideoCardProps) => (
+const VideoCard = ({ id, title, thumbnail, duration, category, isPremium, progress, onClick }: VideoCardProps) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else if (id) {
+      navigate(`/video/${id}`);
+    }
+  };
+
+  return (
   <motion.button
     whileTap={{ scale: 0.97 }}
-    onClick={onClick}
+    onClick={handleClick}
     className="w-full text-left rounded-2xl overflow-hidden shadow-card bg-card border border-border/50 group"
   >
     <div className="relative aspect-video bg-muted overflow-hidden">
@@ -51,6 +64,7 @@ const VideoCard = ({ title, thumbnail, duration, category, isPremium, progress, 
       )}
     </div>
   </motion.button>
-);
+  );
+};
 
 export default VideoCard;

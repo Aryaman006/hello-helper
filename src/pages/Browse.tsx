@@ -110,6 +110,7 @@ const Browse = () => {
                 transition={{ delay: i * 0.03 }}
               >
                 <VideoCard
+                  id={vid.id}
                   title={vid.title}
                   thumbnail={vid.thumbnail_url}
                   duration={formatDuration(vid.duration_seconds)}

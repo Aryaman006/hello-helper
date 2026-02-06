@@ -11,6 +11,7 @@ import Live from "./pages/Live";
 import MyVideos from "./pages/MyVideos";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import VideoPlayer from "./pages/VideoPlayer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ const AppRoutes = () => {
           </AppLayout>
         }
       />
+      <Route path="/video/:id" element={<VideoPlayer />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
