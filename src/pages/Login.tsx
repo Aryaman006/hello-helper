@@ -116,7 +116,17 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground font-body mt-6">
+        {!isSignUp && (
+          <button
+            type="button"
+            onClick={() => navigate('/forgot-password')}
+            className="block text-center text-sm text-accent font-body font-semibold mt-4 w-full"
+          >
+            Forgot password?
+          </button>
+        )}
+
+        <p className="text-center text-sm text-muted-foreground font-body mt-4">
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
           <button
             onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
