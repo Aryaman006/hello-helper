@@ -10,8 +10,9 @@ interface Video {
   id: string;
   title: string;
   thumbnail_url?: string;
-  duration?: number;
+  duration_seconds?: number;
   is_premium?: boolean;
+  yogic_points?: number;
   categories?: { name: string };
 }
 
@@ -30,13 +31,13 @@ const MyVideos = () => {
       const [progressRes, wishlistRes] = await Promise.all([
         supabase
           .from('watch_progress')
-          .select('progress_percent, videos(id, title, thumbnail_url, duration, is_premium, categories(name))')
+          .select('watched_seconds, completed, last_watched_at, videos(id, title, thumbnail_url, duration_seconds, is_premium, yogic_points)')
           .eq('user_id', user.id)
-          .order('updated_at', { ascending: false })
+          .order('last_watched_at', { ascending: false })
           .limit(10),
         supabase
           .from('wishlist')
-          .select('videos(id, title, thumbnail_url, duration, is_premium, categories(name))')
+          .select('id, videos(id, title, thumbnail_url, is_premium, yogic_points)')
           .eq('user_id', user.id)
           .limit(20),
       ]);
@@ -45,7 +46,12 @@ const MyVideos = () => {
         setContinueVideos(
           progressRes.data
             .filter((d: any) => d.videos)
-            .map((d: any) => ({ ...d.videos, progress: d.progress_percent }))
+            .map((d: any) => ({
+              ...d.videos,
+              progress: d.videos.duration_seconds
+                ? Math.round((d.watched_seconds / d.videos.duration_seconds) * 100)
+                : 0,
+            }))
         );
       }
       if (wishlistRes.data) {
@@ -58,6 +64,7 @@ const MyVideos = () => {
   }, [user]);
 
   const formatDuration = (s?: number) => s ? `${Math.floor(s / 60)} min` : undefined;
+  // Note: duration field in Video is now duration_seconds
   const videos = tab === 'continue' ? continueVideos : wishlistVideos;
 
   return (
@@ -105,7 +112,7 @@ const MyVideos = () => {
                   <VideoCard
                     title={vid.title}
                     thumbnail={vid.thumbnail_url}
-                    duration={formatDuration(vid.duration)}
+                    duration={formatDuration(vid.duration_seconds)}
                     category={vid.categories?.name}
                     isPremium={vid.is_premium}
                     progress={'progress' in vid ? (vid as any).progress : undefined}

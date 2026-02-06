@@ -8,15 +8,17 @@ import SkeletonCard from '@/components/ui/SkeletonCard';
 interface Category {
   id: string;
   name: string;
+  thumbnail_url?: string;
 }
 
 interface Video {
   id: string;
   title: string;
   thumbnail_url?: string;
-  duration?: number;
+  duration_seconds?: number;
   is_premium?: boolean;
-  categories?: { name: string };
+  yogic_points?: number;
+  categories?: { name: string } | null;
 }
 
 const Browse = () => {
@@ -27,7 +29,7 @@ const Browse = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from('categories').select('*').then(({ data }) => {
+    supabase.from('categories').select('id, name, thumbnail_url').then(({ data }) => {
       if (data) setCategories(data);
     });
   }, []);
@@ -35,11 +37,15 @@ const Browse = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       setLoading(true);
-      let query = supabase.from('videos').select('*, categories(name)');
+      let query = supabase
+        .from('videos')
+        .select('id, title, thumbnail_url, duration_seconds, is_premium, yogic_points, categories(name)')
+        .eq('is_published', true);
       if (selectedCategory) query = query.eq('category_id', selectedCategory);
       if (search) query = query.ilike('title', `%${search}%`);
+      query = query.order('created_at', { ascending: false });
       const { data } = await query.limit(20);
-      if (data) setVideos(data);
+      if (data) setVideos(data as unknown as Video[]);
       setLoading(false);
     };
     fetchVideos();
@@ -106,7 +112,7 @@ const Browse = () => {
                 <VideoCard
                   title={vid.title}
                   thumbnail={vid.thumbnail_url}
-                  duration={formatDuration(vid.duration)}
+                  duration={formatDuration(vid.duration_seconds)}
                   category={vid.categories?.name}
                   isPremium={vid.is_premium}
                 />
