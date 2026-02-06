@@ -179,7 +179,7 @@ const Subscribe = () => {
   if (hasActiveSubscription) {
     return (
       <div className="min-h-screen bg-background px-5 pt-6 pb-4">
-        <button onClick={() => navigate(-1)} className="mb-6">
+        <button onClick={() => { if (window.history.length > 1) navigate(-1); else navigate('/'); }} className="mb-6">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <motion.div
@@ -229,7 +229,7 @@ const Subscribe = () => {
           </p>
         </div>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => { if (window.history.length > 1) navigate(-1); else navigate('/'); }}
           className="absolute top-4 left-4 safe-top w-10 h-10 rounded-full bg-primary-foreground/20 flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-primary-foreground" />
