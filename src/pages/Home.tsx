@@ -10,17 +10,18 @@ import heroImage from '@/assets/hero-yoga.jpg';
 interface Category {
   id: string;
   name: string;
-  image_url?: string;
+  thumbnail_url?: string;
 }
 
 interface Video {
   id: string;
   title: string;
   thumbnail_url?: string;
-  duration?: number;
+  duration_seconds?: number;
   is_premium?: boolean;
-  category_id?: string;
-  categories?: { name: string };
+  yogic_points?: number;
+  views_count?: number;
+  categories?: { name: string } | null;
 }
 
 const Home = () => {
@@ -34,17 +35,27 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       const [catRes, vidRes] = await Promise.all([
-        supabase.from('categories').select('*').limit(6),
-        supabase.from('videos').select('*, categories(name)').limit(8),
+        supabase
+          .from('categories')
+          .select('id, name, thumbnail_url')
+          .eq('is_featured', true)
+          .order('sort_order')
+          .limit(6),
+        supabase
+          .from('videos')
+          .select('id, title, thumbnail_url, duration_seconds, is_premium, yogic_points, views_count, categories(name)')
+          .eq('is_published', true)
+          .order('views_count', { ascending: false })
+          .limit(8),
       ]);
 
       if (catRes.data) setCategories(catRes.data);
-      if (vidRes.data) setRecentVideos(vidRes.data);
+      if (vidRes.data) setRecentVideos(vidRes.data as unknown as Video[]);
 
       if (user) {
         const [pointsRes, profileRes] = await Promise.all([
-          supabase.rpc('get_user_yogic_points', { p_user_id: user.id }),
-          supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+          supabase.rpc('get_user_yogic_points', { _user_id: user.id }),
+          supabase.from('profiles').select('full_name').eq('user_id', user.id).maybeSingle(),
         ]);
         if (pointsRes.data !== null) setPoints(pointsRes.data);
         if (profileRes.data?.full_name) setProfileName(profileRes.data.full_name);
@@ -134,8 +145,8 @@ const Home = () => {
                   className="shrink-0 w-24 rounded-2xl overflow-hidden shadow-card border border-border/50 bg-card"
                 >
                   <div className="h-16 gradient-gold-light flex items-center justify-center">
-                    {cat.image_url ? (
-                      <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
+                    {cat.thumbnail_url ? (
+                      <img src={cat.thumbnail_url} alt={cat.name} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-2xl">🧘</span>
                     )}
@@ -171,7 +182,7 @@ const Home = () => {
                   <VideoCard
                     title={vid.title}
                     thumbnail={vid.thumbnail_url}
-                    duration={formatDuration(vid.duration)}
+                    duration={formatDuration(vid.duration_seconds)}
                     category={vid.categories?.name}
                     isPremium={vid.is_premium}
                   />

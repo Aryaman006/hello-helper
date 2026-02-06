@@ -8,19 +8,14 @@ import { useNavigate } from 'react-router-dom';
 interface ProfileData {
   full_name?: string;
   avatar_url?: string;
-}
-
-interface SubscriptionData {
-  plan_type?: string;
-  status?: string;
-  end_date?: string;
+  phone?: string;
 }
 
 const Profile = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [points, setPoints] = useState(0);
 
   useEffect(() => {
@@ -28,13 +23,13 @@ const Profile = () => {
 
     const fetchProfile = async () => {
       const [profileRes, subRes, pointsRes] = await Promise.all([
-        supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single(),
-        supabase.from('subscriptions').select('plan_type, status, end_date').eq('user_id', user.id).eq('status', 'active').single(),
-        supabase.rpc('get_user_yogic_points', { p_user_id: user.id }),
+        supabase.from('profiles').select('full_name, avatar_url, phone').eq('user_id', user.id).maybeSingle(),
+        supabase.rpc('has_active_subscription', { _user_id: user.id }),
+        supabase.rpc('get_user_yogic_points', { _user_id: user.id }),
       ]);
 
       if (profileRes.data) setProfile(profileRes.data);
-      if (subRes.data) setSubscription(subRes.data);
+      if (subRes.data !== null) setIsPremium(!!subRes.data);
       if (pointsRes.data !== null) setPoints(pointsRes.data);
     };
 
@@ -64,8 +59,6 @@ const Profile = () => {
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
     : user.email?.[0].toUpperCase() || 'U';
-
-  const isPremium = subscription?.plan_type === 'premium';
 
   return (
     <div className="px-5 pt-6 pb-4">
