@@ -14,6 +14,8 @@ import Login from "./pages/Login";
 import VideoPlayer from "./pages/VideoPlayer";
 import CategoryPage from "./pages/CategoryPage";
 import Subscribe from "./pages/Subscribe";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +41,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/subscribe" element={<Subscribe />} />
       <Route
         path="/"
