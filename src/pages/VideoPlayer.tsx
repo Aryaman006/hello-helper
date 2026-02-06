@@ -295,7 +295,7 @@ const VideoPlayer = () => {
             <p className="text-sm text-muted-foreground font-body mb-6">{video.description}</p>
           )}
           <button
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate('/subscribe')}
             className="w-full py-3.5 rounded-2xl gradient-gold text-primary-foreground font-semibold font-body text-base shadow-glow active:scale-[0.98] transition-transform"
           >
             Upgrade to Premium

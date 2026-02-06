@@ -120,7 +120,10 @@ const Profile = () => {
           <p className="text-xs text-muted-foreground font-body mb-3">
             Unlock all classes, live sessions, and exclusive content.
           </p>
-          <button className="px-4 py-2 rounded-xl gradient-gold text-primary-foreground text-sm font-semibold font-body shadow-glow active:scale-95 transition-all">
+          <button
+            onClick={() => navigate('/subscribe')}
+            className="px-4 py-2 rounded-xl gradient-gold text-primary-foreground text-sm font-semibold font-body shadow-glow active:scale-95 transition-all"
+          >
             View Plans
           </button>
         </motion.div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -14,6 +14,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = (location.state as any)?.returnTo || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,7 @@ const Login = () => {
     if (error) {
       setError(error.message);
     } else if (!isSignUp) {
-      navigate('/');
+      navigate(returnTo);
     } else {
       setError('Check your email to confirm your account.');
     }
