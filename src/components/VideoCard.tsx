@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { Play, Clock, Star } from 'lucide-react';
+import { Play, Clock, Lock } from 'lucide-react';
 import PremiumBadge from './ui/PremiumBadge';
 import { motion } from 'framer-motion';
+import { usePremiumGate } from '@/hooks/usePremiumGate';
 
 interface VideoCardProps {
   id?: string;
@@ -16,12 +17,13 @@ interface VideoCardProps {
 
 const VideoCard = ({ id, title, thumbnail, duration, category, isPremium, progress, onClick }: VideoCardProps) => {
   const navigate = useNavigate();
+  const { checkAccess } = usePremiumGate();
   
   const handleClick = () => {
     if (onClick) {
       onClick();
     } else if (id) {
-      navigate(`/video/${id}`);
+      checkAccess(isPremium, () => navigate(`/video/${id}`));
     }
   };
 
@@ -47,8 +49,13 @@ const VideoCard = ({ id, title, thumbnail, duration, category, isPremium, progre
         </span>
       )}
       {isPremium && (
-        <div className="absolute top-2 left-2">
+        <div className="absolute top-2 left-2 flex items-center gap-1">
           <PremiumBadge />
+        </div>
+      )}
+      {isPremium && (
+        <div className="absolute top-2 right-2">
+          <Lock className="w-3.5 h-3.5 text-background/80" />
         </div>
       )}
       {typeof progress === 'number' && progress > 0 && (

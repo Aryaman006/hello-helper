@@ -12,6 +12,8 @@ import MyVideos from "./pages/MyVideos";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import VideoPlayer from "./pages/VideoPlayer";
+import CategoryPage from "./pages/CategoryPage";
+import Subscribe from "./pages/Subscribe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/subscribe" element={<Subscribe />} />
       <Route
         path="/"
         element={
@@ -76,6 +79,14 @@ const AppRoutes = () => {
         element={
           <AppLayout>
             <Profile />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/category/:id"
+        element={
+          <AppLayout>
+            <CategoryPage />
           </AppLayout>
         }
       />

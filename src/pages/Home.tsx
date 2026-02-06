@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
@@ -26,6 +27,7 @@ interface Video {
 
 const Home = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [recentVideos, setRecentVideos] = useState<Video[]>([]);
   const [points, setPoints] = useState(0);
@@ -142,6 +144,7 @@ const Home = () => {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
+                  onClick={() => navigate(`/category/${cat.id}`)}
                   className="shrink-0 w-24 rounded-2xl overflow-hidden shadow-card border border-border/50 bg-card"
                 >
                   <div className="h-16 gradient-gold-light flex items-center justify-center">
