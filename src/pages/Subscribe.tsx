@@ -124,7 +124,7 @@ const Subscribe = () => {
 
       // Step 3: Open Razorpay checkout
       const options = {
-        key: orderData.razorpayKey,
+        key: orderData.keyId,
         amount: orderData.amount,
         currency: 'INR',
         name: 'Playoga',
