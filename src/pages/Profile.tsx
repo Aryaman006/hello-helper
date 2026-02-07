@@ -4,14 +4,13 @@ import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 import {
   LogOut, Crown, Sparkles, ChevronRight, HelpCircle,
-  Play, CheckCircle, Clock, Mail, Phone, User as UserIcon, Calendar
+  Play, CheckCircle, Clock, Mail, User as UserIcon, Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PremiumBadge from '@/components/ui/PremiumBadge';
 
 interface ProfileData {
   full_name?: string;
-  phone?: string;
 }
 
 interface SubscriptionData {
@@ -39,7 +38,7 @@ const Profile = () => {
     if (!user) return;
 
     const [profileRes, pointsRes, subscriptionRes, watchProgressRes] = await Promise.all([
-      supabase.from('profiles').select('full_name, phone').eq('user_id', user.id).maybeSingle(),
+      supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
       supabase.rpc('get_user_yogic_points', { _user_id: user.id }),
       supabase
         .from('subscriptions')
@@ -171,7 +170,6 @@ const Profile = () => {
           {/* Info rows */}
           <InfoRow icon={UserIcon} label="Full Name" value={profile?.full_name || 'Not set'} />
           <InfoRow icon={Mail} label="Email" value={user.email || ''} />
-          <InfoRow icon={Phone} label="Phone" value={profile?.phone || 'Not set'} />
           <InfoRow icon={Calendar} label="Member Since" value={memberSince} last />
         </div>
       </motion.div>

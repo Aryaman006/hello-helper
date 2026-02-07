@@ -107,9 +107,9 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await adminSupabase
       .from("profiles")
-      .select("full_name, phone")
-      .eq("user_id", userId)
-      .single();
+      .select("full_name")
+      .eq("id", userId)
+      .maybeSingle();
 
     // Create Razorpay order
     const razorpayAuth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
@@ -153,7 +153,6 @@ Deno.serve(async (req) => {
         prefill: {
           name: profile?.full_name || "",
           email: userEmail || "",
-          contact: profile?.phone || "",
         },
         notes: {
           couponId,

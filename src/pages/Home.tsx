@@ -57,7 +57,7 @@ const Home = () => {
       if (user) {
         const [pointsRes, profileRes] = await Promise.all([
           supabase.rpc('get_user_yogic_points', { _user_id: user.id }),
-          supabase.from('profiles').select('full_name').eq('user_id', user.id).maybeSingle(),
+          supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
         ]);
         if (pointsRes.data !== null) setPoints(pointsRes.data);
         if (profileRes.data?.full_name) setProfileName(profileRes.data.full_name);
