@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import heroImage from '@/assets/hero-yoga.jpg';
 
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,20 +22,40 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (isSignUp && fullName.trim().length < 2) {
+      setError('Please enter your full name (at least 2 characters).');
+      return;
+    }
+
     setLoading(true);
 
-    const { error } = isSignUp
-      ? await signUp(email, password)
-      : await signIn(email, password);
-
-    setLoading(false);
-
-    if (error) {
-      setError(error.message);
-    } else if (!isSignUp) {
-      navigate(returnTo);
+    if (isSignUp) {
+      const { error: signUpError, data } = await signUp(email, password);
+      setLoading(false);
+      if (signUpError) {
+        setError(signUpError.message);
+      } else {
+        // Write profile row immediately after signup
+        if (data?.user) {
+          const { error: profileError } = await supabase.from('profiles').upsert({
+            id: data.user.id,
+            full_name: fullName.trim(),
+          }, { onConflict: 'id' });
+          if (profileError) {
+            console.error('Profile creation failed:', profileError);
+          }
+        }
+        setError('Check your email to confirm your account.');
+      }
     } else {
-      setError('Check your email to confirm your account.');
+      const { error: signInError } = await signIn(email, password);
+      setLoading(false);
+      if (signInError) {
+        setError(signInError.message);
+      } else {
+        navigate(returnTo);
+      }
     }
   };
 
@@ -68,6 +90,21 @@ const Login = () => {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp && (
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider font-body mb-1.5 block">Full Name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Your full name"
+                required
+                minLength={2}
+                className="w-full h-12 px-4 rounded-xl bg-secondary border border-border text-foreground font-body placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              />
+            </div>
+          )}
+
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider font-body mb-1.5 block">Email</label>
             <input
@@ -129,7 +166,7 @@ const Login = () => {
         <p className="text-center text-sm text-muted-foreground font-body mt-4">
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
           <button
-            onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+            onClick={() => { setIsSignUp(!isSignUp); setError(''); setFullName(''); }}
             className="text-accent font-semibold"
           >
             {isSignUp ? 'Sign In' : 'Sign Up'}
