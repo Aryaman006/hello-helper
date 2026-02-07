@@ -9,7 +9,7 @@ import Home from "./pages/Home";
 import Browse from "./pages/Browse";
 import Live from "./pages/Live";
 import MyVideos from "./pages/MyVideos";
-import Profile from "./pages/Profile";
+import Profile from "./pages/Profile.tsx";
 import Login from "./pages/Login";
 import VideoPlayer from "./pages/VideoPlayer";
 import CategoryPage from "./pages/CategoryPage";
