@@ -129,7 +129,7 @@ const Home = () => {
       <section className="mt-6 px-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading text-lg font-semibold text-foreground">Explore</h2>
-          <button className="text-xs text-accent font-body font-semibold flex items-center">
+          <button onClick={() => navigate('/browse')} className="text-xs text-accent font-body font-semibold flex items-center">
             See all <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -166,7 +166,7 @@ const Home = () => {
       <section className="mt-6 px-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading text-lg font-semibold text-foreground">For You</h2>
-          <button className="text-xs text-accent font-body font-semibold flex items-center">
+          <button onClick={() => navigate('/browse')} className="text-xs text-accent font-body font-semibold flex items-center">
             See all <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
