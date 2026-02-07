@@ -36,12 +36,11 @@ const Login = () => {
       if (signUpError) {
         setError(signUpError.message);
       } else {
-        // Write profile row immediately after signup
+        // Write profile row via edge function (bypasses RLS)
         if (data?.user) {
-          const { error: profileError } = await supabase.from('profiles').upsert({
-            id: data.user.id,
-            full_name: fullName.trim(),
-          }, { onConflict: 'id' });
+          const { error: profileError } = await supabase.functions.invoke('create-profile', {
+            body: { full_name: fullName.trim() },
+          });
           if (profileError) {
             console.error('Profile creation failed:', profileError);
           }
