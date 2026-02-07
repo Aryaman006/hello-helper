@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
@@ -18,10 +18,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import PremiumBadge from "@/components/ui/PremiumBadge";
 
-interface ProfileData {
-  full_name: string | null;
-}
-
 interface SubscriptionData {
   status: string;
   plan_type: string;
@@ -34,13 +30,11 @@ interface WatchStats {
   minutesWatched: number;
 }
 
-const MAX_PROFILE_RETRIES = 3;
-
 const Profile = () => {
   const { user, signOut, hasActiveSubscription } = useAuth();
   const navigate = useNavigate();
 
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileName, setProfileName] = useState("");
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [points, setPoints] = useState(0);
   const [watchStats, setWatchStats] = useState<WatchStats>({
@@ -49,56 +43,51 @@ const Profile = () => {
     minutesWatched: 0,
   });
   const [refreshing, setRefreshing] = useState(false);
-  const [profileRetryCount, setProfileRetryCount] = useState(0);
-
-  const fetchProfile = useCallback(async () => {
-    if (!user) return;
-
-    const [profileRes, pointsRes, subscriptionRes, watchProgressRes] = await Promise.all([
-      supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
-
-      supabase.rpc("get_user_yogic_points", { _user_id: user.id }),
-
-      supabase
-        .from("subscriptions")
-        .select("status, plan_type, end_date")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .order("end_date", { ascending: false })
-        .maybeSingle(),
-
-      supabase.from("watch_progress").select("watched_seconds, completed").eq("user_id", user.id),
-    ]);
-
-    // 🔁 Retry once profile row is created (signup race condition)
-    if (!profileRes.data && profileRetryCount < MAX_PROFILE_RETRIES) {
-      setProfileRetryCount((c) => c + 1);
-      setTimeout(fetchProfile, 800);
-      return;
-    }
-
-    if (profileRes.data) setProfile(profileRes.data);
-    if (pointsRes.data !== null) setPoints(pointsRes.data);
-    if (subscriptionRes.data) setSubscription(subscriptionRes.data);
-
-    if (watchProgressRes.data) {
-      const rows = watchProgressRes.data;
-      setWatchStats({
-        videosWatched: rows.length,
-        completed: rows.filter((r: any) => r.completed).length,
-        minutesWatched: Math.floor(rows.reduce((sum: number, r: any) => sum + (r.watched_seconds || 0), 0) / 60),
-      });
-    }
-  }, [user, profileRetryCount]);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (!user) return;
+
+    const fetchData = async () => {
+      const [profileRes, pointsRes, subscriptionRes, watchProgressRes] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+
+        supabase.rpc("get_user_yogic_points", { _user_id: user.id }),
+
+        supabase
+          .from("subscriptions")
+          .select("status, plan_type, end_date")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .order("end_date", { ascending: false })
+          .maybeSingle(),
+
+        supabase.from("watch_progress").select("watched_seconds, completed").eq("user_id", user.id),
+      ]);
+
+      if (profileRes.data?.full_name) {
+        setProfileName(profileRes.data.full_name);
+      }
+
+      if (pointsRes.data !== null) setPoints(pointsRes.data);
+      if (subscriptionRes.data) setSubscription(subscriptionRes.data);
+
+      if (watchProgressRes.data) {
+        const rows = watchProgressRes.data;
+        setWatchStats({
+          videosWatched: rows.length,
+          completed: rows.filter((r: any) => r.completed).length,
+          minutesWatched: Math.floor(rows.reduce((sum: number, r: any) => sum + (r.watched_seconds || 0), 0) / 60),
+        });
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    setProfileRetryCount(0);
-    await fetchProfile();
+    setProfileName("");
+    await new Promise((r) => setTimeout(r, 300));
     setRefreshing(false);
   };
 
@@ -117,7 +106,7 @@ const Profile = () => {
         <p className="text-muted-foreground font-body mb-6">Sign in to view your profile</p>
         <button
           onClick={() => navigate("/login")}
-          className="px-8 py-3.5 rounded-2xl gradient-gold text-primary-foreground font-semibold font-body shadow-glow"
+          className="px-8 py-3.5 rounded-2xl gradient-gold text-primary-foreground font-semibold shadow-glow"
         >
           Sign In
         </button>
@@ -125,10 +114,10 @@ const Profile = () => {
     );
   }
 
-  const displayName = profile?.full_name?.trim() || "Not set";
+  const displayName = profileName || "Not set";
 
-  const initials = profile?.full_name
-    ? profile.full_name
+  const initials = profileName
+    ? profileName
         .split(" ")
         .map((n) => n[0])
         .join("")
@@ -164,29 +153,25 @@ const Profile = () => {
       )}
 
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-6"
-      >
-        <h1 className="font-heading text-2xl font-bold text-foreground">My Profile</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-heading text-2xl font-bold">My Profile</h1>
         <button
           onClick={handleSignOut}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-destructive hover:bg-destructive/10"
         >
           <LogOut className="w-4 h-4" />
-          <span className="text-sm font-body font-semibold">Log Out</span>
+          <span className="text-sm font-semibold">Log Out</span>
         </button>
-      </motion.div>
+      </div>
 
       {/* Profile Card */}
       <div className="bg-card rounded-2xl border border-border/50 shadow-card overflow-hidden mb-5">
         <div className="flex items-center gap-4 px-4 py-4 border-b border-border/50">
-          <div className="w-14 h-14 rounded-full gradient-gold flex items-center justify-center text-xl font-heading font-bold text-primary-foreground">
+          <div className="w-14 h-14 rounded-full gradient-gold flex items-center justify-center text-xl font-bold text-primary-foreground">
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="font-heading font-bold truncate">{displayName}</p>
+            <p className="font-bold truncate">{displayName}</p>
             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
             {hasActiveSubscription && <PremiumBadge />}
           </div>
@@ -202,12 +187,12 @@ const Profile = () => {
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Crown className="w-5 h-5 text-accent" />
-            <span className="text-sm font-body font-semibold">{hasActiveSubscription ? "Active" : "Inactive"}</span>
+            <span className="text-sm font-semibold">{hasActiveSubscription ? "Active" : "Inactive"}</span>
           </div>
           {!hasActiveSubscription && (
             <button
               onClick={() => navigate("/subscribe")}
-              className="text-xs font-body font-semibold text-primary px-3 py-1.5 rounded-lg bg-primary/10"
+              className="text-xs font-semibold text-primary px-3 py-1.5 rounded-lg bg-primary/10"
             >
               Upgrade
             </button>
@@ -227,7 +212,7 @@ const Profile = () => {
         <div className="flex items-center gap-3">
           <Sparkles className="w-6 h-6 text-accent" />
           <div>
-            <p className="text-2xl font-heading font-bold">{points}</p>
+            <p className="text-2xl font-bold">{points}</p>
             <p className="text-xs text-muted-foreground">Earned from completing videos</p>
           </div>
         </div>
@@ -244,13 +229,9 @@ const Profile = () => {
       <button className="w-full flex items-center justify-between px-4 py-3.5 bg-card rounded-2xl border border-border/50 shadow-card">
         <div className="flex items-center gap-3">
           <HelpCircle className="w-5 h-5 text-muted-foreground" />
-          <span className="text-sm font-body">Help & Support</span>
+          <span className="text-sm">Help & Support</span>
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
-      </button>
-
-      <button onClick={handleRefresh} className="w-full text-center text-xs text-muted-foreground/50 mt-6">
-        Tap to refresh
       </button>
     </div>
   );
@@ -279,7 +260,7 @@ const InfoRow = ({
 const StatCard = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: number }) => (
   <div className="bg-card rounded-2xl border border-border/50 shadow-card p-3 text-center">
     <Icon className="w-5 h-5 text-accent mx-auto mb-1" />
-    <p className="text-lg font-heading font-bold">{value}</p>
+    <p className="text-lg font-bold">{value}</p>
     <p className="text-[10px] text-muted-foreground">{label}</p>
   </div>
 );
