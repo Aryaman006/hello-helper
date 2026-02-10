@@ -55,6 +55,7 @@ const Home = () => {
       if (vidRes.data) setRecentVideos(vidRes.data as unknown as Video[]);
 
       if (user) {
+        setProfileName(user.user_metadata.full_name)
         const [pointsRes, profileRes] = await Promise.all([
           supabase.rpc('get_user_yogic_points', { _user_id: user.id }),
           supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),

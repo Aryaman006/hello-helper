@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/layout/AppLayout";
+import { BackButtonListener } from "@capacitor/app";
 import Home from "./pages/Home";
 import Browse from "./pages/Browse";
 import Live from "./pages/Live";
@@ -17,6 +18,7 @@ import Subscribe from "./pages/Subscribe";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import BackButtonHandler from "./components/BackButtonHandler.tsx";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +109,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+        <BackButtonHandler/>
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>

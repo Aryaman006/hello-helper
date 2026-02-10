@@ -42,6 +42,7 @@ const Profile = () => {
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [points, setPoints] = useState(0);
+  const [profileName, setProfileName] = useState('');
   const [watchStats, setWatchStats] = useState<WatchStats>({
     videosWatched: 0,
     completed: 0,
@@ -51,6 +52,8 @@ const Profile = () => {
 
   const fetchProfile = useCallback(async () => {
     if (!user) return;
+
+    setProfileName(user.user_metadata.full_name)
 
     /* 1️⃣ PROFILE (CRITICAL – never block) */
     const profileRes = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
@@ -122,7 +125,7 @@ const Profile = () => {
      Derived values
   =============================== */
 
-  const displayName = profile?.full_name || "Not set";
+  const displayName = profileName?.split(' ')[0] || "Not set";
 
   const initials = profile?.full_name
     ? profile.full_name
