@@ -5,12 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/layout/AppLayout";
-import { BackButtonListener } from "@capacitor/app";
 import Home from "./pages/Home";
 import Browse from "./pages/Browse";
 import Live from "./pages/Live";
 import MyVideos from "./pages/MyVideos";
-import Profile from "./pages/Profile.tsx";
+import Profile from "./pages/Profile";
+import Wallet from "./pages/Wallet"; // ✅ ADDED
 import Login from "./pages/Login";
 import VideoPlayer from "./pages/VideoPlayer";
 import CategoryPage from "./pages/CategoryPage";
@@ -18,9 +18,13 @@ import Subscribe from "./pages/Subscribe";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
-import BackButtonHandler from "./components/BackButtonHandler.tsx";
+import BackButtonHandler from "./components/BackButtonHandler";
 
 const queryClient = new QueryClient();
+
+/* ===============================
+   Protected Route
+=============================== */
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -28,6 +32,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
+
+/* ===============================
+   App Routes
+=============================== */
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -42,10 +50,18 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      {/* Auth */}
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/" replace /> : <Login />}
+      />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Subscription */}
       <Route path="/subscribe" element={<Subscribe />} />
+
+      {/* Main App */}
       <Route
         path="/"
         element={
@@ -54,6 +70,7 @@ const AppRoutes = () => {
           </AppLayout>
         }
       />
+
       <Route
         path="/browse"
         element={
@@ -62,6 +79,7 @@ const AppRoutes = () => {
           </AppLayout>
         }
       />
+
       <Route
         path="/live"
         element={
@@ -70,6 +88,7 @@ const AppRoutes = () => {
           </AppLayout>
         }
       />
+
       <Route
         path="/my-videos"
         element={
@@ -80,14 +99,32 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* Profile */}
       <Route
         path="/profile"
         element={
-          <AppLayout>
-            <Profile />
-          </AppLayout>
+          <ProtectedRoute>
+            <AppLayout>
+              <Profile />
+            </AppLayout>
+          </ProtectedRoute>
         }
       />
+
+      {/* ✅ Wallet (MATCHES WEB FLOW) */}
+      <Route
+        path="/wallet"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Wallet />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Content */}
       <Route
         path="/category/:id"
         element={
@@ -96,11 +133,18 @@ const AppRoutes = () => {
           </AppLayout>
         }
       />
+
       <Route path="/video/:id" element={<VideoPlayer />} />
+
+      {/* Fallback */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
+
+/* ===============================
+   App Root
+=============================== */
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -109,7 +153,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-        <BackButtonHandler/>
+          <BackButtonHandler />
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>
