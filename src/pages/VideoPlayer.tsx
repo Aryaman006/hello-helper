@@ -16,6 +16,7 @@ import {
   Heart,
   HeartOff,
 } from 'lucide-react';
+import VideoCard from '@/components/VideoCard';
 import { toast } from 'sonner';
 
 interface VideoData {
@@ -35,6 +36,16 @@ interface WatchProgress {
   completed: boolean;
 }
 
+interface RelatedVideo {
+  id: string;
+  title: string;
+  thumbnail_url?: string;
+  duration_seconds: number;
+  is_premium: boolean;
+  categories?: { name: string } | null;
+  source: 'category' | 'wishlist';
+}
+
 const VideoPlayer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -52,6 +63,7 @@ const VideoPlayer = () => {
   const [initialProgress, setInitialProgress] = useState(0);
   const [pointsAwarded, setPointsAwarded] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [relatedVideos, setRelatedVideos] = useState<RelatedVideo[]>([]);
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch video data, access check, progress, and wishlist status
@@ -63,7 +75,7 @@ const VideoPlayer = () => {
 
       const { data: videoData } = await supabase
         .from('videos')
-        .select('id, title, description, video_url, thumbnail_url, duration_seconds, is_premium, yogic_points, categories(name)')
+        .select('id, title, description, video_url, thumbnail_url, duration_seconds, is_premium, yogic_points, category_id, categories(name)')
         .eq('id', id)
         .single();
 
@@ -106,6 +118,60 @@ const VideoPlayer = () => {
         }
         setIsWishlisted(!!wishlistRes.data);
       }
+
+      // Fetch related videos
+      const categoryId = (videoData as any).category_id;
+      const relatedPromises: Promise<any>[] = [];
+
+      // Same category videos
+      if (categoryId) {
+        relatedPromises.push(
+          (async () => {
+            const { data } = await supabase
+              .from('videos')
+              .select('id, title, thumbnail_url, duration_seconds, is_premium, categories(name)')
+              .eq('category_id', categoryId)
+              .eq('is_published', true)
+              .neq('id', id)
+              .limit(6);
+            return (data || []).map((v: any) => ({ ...v, source: 'category' as const }));
+          })()
+        );
+      } else {
+        relatedPromises.push(Promise.resolve([]));
+      }
+
+      // Wishlist videos
+      if (user) {
+        relatedPromises.push(
+          (async () => {
+            const { data } = await supabase
+              .from('wishlist')
+              .select('video_id, videos(id, title, thumbnail_url, duration_seconds, is_premium, categories(name))')
+              .eq('user_id', user.id)
+              .neq('video_id', id)
+              .limit(6);
+            return (data || [])
+              .filter((w: any) => w.videos)
+              .map((w: any) => ({ ...w.videos, source: 'wishlist' as const }));
+          })()
+        );
+      } else {
+        relatedPromises.push(Promise.resolve([]));
+      }
+
+      const [categoryVideos, wishlistVideos] = await Promise.all(relatedPromises);
+
+      // Deduplicate, category first
+      const seen = new Set<string>();
+      const combined: RelatedVideo[] = [];
+      for (const v of [...categoryVideos, ...wishlistVideos]) {
+        if (!seen.has(v.id)) {
+          seen.add(v.id);
+          combined.push(v);
+        }
+      }
+      setRelatedVideos(combined);
 
       setLoading(false);
     };
@@ -456,6 +522,26 @@ const VideoPlayer = () => {
           <div>
             <h3 className="font-heading text-sm font-semibold text-foreground mb-2">About</h3>
             <p className="text-sm text-muted-foreground font-body leading-relaxed">{video.description}</p>
+          </div>
+        )}
+
+        {/* Related Videos */}
+        {relatedVideos.length > 0 && (
+          <div className="mt-6">
+            <h3 className="font-heading text-sm font-semibold text-foreground mb-3">Related Videos</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {relatedVideos.map((rv) => (
+                <VideoCard
+                  key={rv.id}
+                  id={rv.id}
+                  title={rv.title}
+                  thumbnail={rv.thumbnail_url}
+                  duration={rv.duration_seconds > 0 ? `${Math.floor(rv.duration_seconds / 60)}:${String(rv.duration_seconds % 60).padStart(2, '0')}` : undefined}
+                  category={rv.categories?.name}
+                  isPremium={rv.is_premium}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
